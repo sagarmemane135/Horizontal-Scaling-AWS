@@ -12,9 +12,9 @@
 ## 🌟 Project Highlights
 
 - ✅ **Auto Scaling** - Dynamically scale from 2 to 10 instances based on CPU load
-- ✅ **Zero Downtime** - Rolling deployments with no service interruption
-- ✅ **Self-Healing** - Automatic instance replacement on failure
-- ✅ **99.9% Uptime** - Achieved during testing with health monitoring
+- ✅ **Zero Downtime** - Rolling deployment capability with no service interruption
+- ✅ **Self-Healing** - Automatic instance replacement on failure (validated)
+- ✅ **High Availability** - Multi-AZ deployment with health monitoring
 - ✅ **70% Cost Savings** - Through intelligent auto-scaling vs static infrastructure
 - ✅ **Stateless Architecture** - Redis session management across all instances
 
@@ -57,16 +57,16 @@ A complete AWS horizontal scaling implementation with:
 
 ---
 
-## 📊 Proven Results
+## 📊 Implementation Results
 
 | Metric | Result |
 |--------|--------|
-| **Uptime** | 99.9% during testing period |
-| **Auto Scaling** | 2-10 instances based on load |
-| **Deployments** | Zero downtime (rolling updates) |
-| **Self-Healing** | 3 automatic instance replacements |
-| **Cost Savings** | 70% vs static 10-instance setup |
-| **Session Persistence** | 100% across all instances |
+| **High Availability** | Multi-AZ deployment with health checks |
+| **Auto Scaling** | 2-10 instances configured (CPU-based) |
+| **Deployments** | Zero-downtime capability (rolling updates) |
+| **Self-Healing** | Validated (replaced terminated instance) |
+| **Cost Savings** | 70% potential vs static 10-instance setup |
+| **Session Persistence** | Working across all instances (Redis) |
 
 ---
 
