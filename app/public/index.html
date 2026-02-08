@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudScale Tasks - Distributed Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .task-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            background: #f7f9fc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            transition: background 0.2s;
+        }
+
+        .task-item:hover {
+            background: #eef1f8;
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            border-left-color: #28a745;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .task-meta {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #2f855a 100%);
+        }
+
+        .file-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            background: #f7f9fc;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-name {
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .file-size {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .instance-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+
+        .priority-high { border-left-color: #f56565; }
+        .priority-medium { border-left-color: #ed8936; }
+        .priority-low { border-left-color: #48bb78; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>☁️ CloudScale Tasks</h1>
+            <p class="subtitle">Distributed Task Manager powered by AWS Auto Scaling <span class="instance-badge" id="currentInstance">Loading...</span></p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="statTasks">0</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statFiles">0</div>
+                <div class="stat-label">Files Uploaded</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statSessions">0</div>
+                <div class="stat-label">Session Views</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statInstances">-</div>
+                <div class="stat-label">Active Instances</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Task Management -->
+            <div class="card">
+                <h2><span class="icon">✅</span> Task Manager</h2>
+                
+                <div id="taskAlert"></div>
+
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label>Task Title</label>
+                        <input type="text" id="taskTitle" placeholder="What needs to be done?" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description (Optional)</label>
+                        <textarea id="taskDesc" placeholder="Add details..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <button type="submit">
+                        <span id="taskBtnText">Add Task</span>
+                        <span id="taskLoading" style="display:none;" class="loading"></span>
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px; font-size: 16px; color: #666;">Your Tasks</h3>
+                    <ul class="task-list" id="taskList">
+                        <li class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div>No tasks yet. Add one above!</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="card">
+                <h2><span class="icon">📁</span> File Storage (S3)</h2>
+                
+                <div id="fileAlert"></div>
+
+                <form id="fileForm">
+                    <div class="form-group">
+                        <label>Upload File to S3</label>
+                        <input type="file" id="fileInput" required>
+                    </div>
+                    <button type="submit">
+                        <span id="fileBtnText">Upload to S3</span>
+                        <span id="fileLoading" style="display:none;" class="loading"></span>
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px; font-size: 16px; color: #666;">Uploaded Files</h3>
+                    <div class="file-list" id="fileList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <div>No files uploaded yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let tasks = [];
+        let files = [];
+        let instanceSet = new Set();
+
+        // Initialize
+        async function init() {
+            await loadStats();
+            loadTasks();
+            loadFiles();
+            setInterval(loadStats, 5000); // Update stats every 5 seconds
+        }
+
+        // Load Stats
+        async function loadStats() {
+            try {
+                const [healthRes, sessionRes] = await Promise.all([
+                    fetch(`${API_BASE}/health`),
+                    fetch(`${API_BASE}/session`)
+                ]);
+                
+                const health = await healthRes.json();
+                const session = await sessionRes.json();
+                
+                document.getElementById('currentInstance').textContent = health.instance;
+                document.getElementById('statSessions').textContent = session.views || 0;
+                instanceSet.add(health.instance);
+                document.getElementById('statInstances').textContent = instanceSet.size;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        // Task Management
+        document.getElementById('taskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('taskTitle').value;
+            const desc = document.getElementById('taskDesc').value;
+            const priority = document.getElementById('taskPriority').value;
+            
+            showLoading('task', true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description: desc, priority })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    tasks.push(data.task);
+                    renderTasks();
+                    document.getElementById('taskForm').reset();
+                    showAlert('task', 'Task added successfully!', 'success');
+                    updateTaskCount();
+                } else {
+                    showAlert('task', data.error || 'Failed to add task', 'error');
+                }
+            } catch (err) {
+                showAlert('task', 'Network error', 'error');
+            }
+            
+            showLoading('task', false);
+        });
+
+        async function toggleTask(id) {
+            try {
+                const response = await fetch(`${API_BASE}/api/tasks/${id}/toggle`, {
+                    method: 'PUT'
+                });
+                const data = await response.json();
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = data.task.completed;
+                    renderTasks();
+                }
+            } catch (err) {
+                console.error('Failed to toggle task:', err);
+            }
+        }
+
+        async function deleteTask(id) {
+            try {
+                await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE' });
+                tasks = tasks.filter(t => t.id !== id);
+                renderTasks();
+                updateTaskCount();
+            } catch (err) {
+                console.error('Failed to delete task:', err);
+            }
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            
+            if (tasks.length === 0) {
+                list.innerHTML = `
+                    <li class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>No tasks yet. Add one above!</div>
+                    </li>
+                `;
+                return;
+            }
+            
+            list.innerHTML = tasks.map(task => `
+                <li class="task-item priority-${task.priority} ${task.completed ? 'completed' : ''}">
+                    <div class="task-content">
+                        <div class="task-title">${task.completed ? '✓ ' : ''}${task.title}</div>
+                        ${task.description ? `<div style="color: #666; font-size: 13px; margin-top: 5px;">${task.description}</div>` : ''}
+                        <div class="task-meta">Priority: ${task.priority} • ${new Date(task.createdAt).toLocaleString()}</div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-small btn-success" onclick="toggleTask('${task.id}')">
+                            ${task.completed ? '↩' : '✓'}
+                        </button>
+                        <button class="btn-small btn-danger" onclick="deleteTask('${task.id}')">🗑</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function loadTasks() {
+            // Tasks are stored in session
+            fetch(`${API_BASE}/api/tasks`)
+                .then(res => res.json())
+                .then(data => {
+                    tasks = data.tasks || [];
+                    renderTasks();
+                    updateTaskCount();
+                })
+                .catch(err => console.error('Failed to load tasks:', err));
+        }
+
+        function updateTaskCount() {
+            document.getElementById('statTasks').textContent = tasks.length;
+        }
+
+        // File Upload
+        document.getElementById('fileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            showLoading('file', true);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    files.push(data.file);
+                    renderFiles();
+                    fileInput.value = '';
+                    showAlert('file', 'File uploaded to S3 successfully!', 'success');
+                    document.getElementById('statFiles').textContent = files.length;
+                } else {
+                    showAlert('file', data.error || 'Upload failed', 'error');
+                }
+            } catch (err) {
+                showAlert('file', 'Upload failed', 'error');
+            }
+            
+            showLoading('file', false);
+        });
+
+        function renderFiles() {
+            const list = document.getElementById('fileList');
+            
+            if (files.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <div>No files uploaded yet</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = files.map(file => `
+                <div class="file-item">
+                    <div>
+                        <div class="file-name">📄 ${file.key || file.originalname}</div>
+                        <div class="file-size">${(file.size / 1024).toFixed(2)} KB</div>
+                    </div>
+                    <button class="btn-small" onclick="window.open('${file.location}', '_blank')">View</button>
+                </div>
+            `).join('');
+        }
+
+        function loadFiles() {
+            // Files list from session
+            fetch(`${API_BASE}/api/files`)
+                .then(res => res.json())
+                .then(data => {
+                    files = data.files || [];
+                    renderFiles();
+                    document.getElementById('statFiles').textContent = files.length;
+                })
+                .catch(err => console.error('Failed to load files:', err));
+        }
+
+        // Helpers
+        function showLoading(type, show) {
+            document.getElementById(`${type}BtnText`).style.display = show ? 'none' : 'inline';
+            document.getElementById(`${type}Loading`).style.display = show ? 'inline-block' : 'none';
+        }
+
+        function showAlert(type, message, alertType) {
+            const alert = document.getElementById(`${type}Alert`);
+            alert.className = `alert alert-${alertType}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            setTimeout(() => alert.style.display = 'none', 3000);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
